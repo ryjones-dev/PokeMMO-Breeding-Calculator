@@ -56,6 +56,20 @@ class Pokemon
 
         return false;
     }
+
+    // Finds an identical pokemon from the given pool. Returns the index of the pokemon in the pool or null if none is found.
+    findPokemonInStartingPool(pokemonPool)
+    {
+        for (var i = 0; i < pokemonPool.length; i++)
+        {
+            if (this.equals(pokemonPool[i]))
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
 }
 
 export { Pokemon };

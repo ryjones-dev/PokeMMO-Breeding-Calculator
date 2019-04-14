@@ -5,7 +5,6 @@ class BreedingNode
     left = null;
     right = null;
     defineGender = false;
-    cost = 0;
 
     constructor(pokemon, parent, left, right)
     {
@@ -31,12 +30,11 @@ class BreedingNode
     {
         let copy = new BreedingNode(this.pokemon, this.parent, this.left, this.right);
         copy.defineGender = this.defineGender;
-        copy.cost = this.cost;
 
         return copy;
     }
 
-    calculateNodeCost()
+    calculateNodeCost(startingPokemonPool)
     {
         // Recursive end check
         if (this.left === null || this.right === null)
@@ -49,6 +47,15 @@ class BreedingNode
         {
             console.log("Error calculating cost: invalid pokemon combination " + this.left + " and " + this.right + " for pokemon " + this.pokemon);
             return null;
+        }
+
+        let pokemonIndex = this.pokemon.findPokemonInStartingPool(startingPokemonPool);
+        if (pokemonIndex > -1)
+        {
+            // console.log("Saved money by using the following pokemon from starting pool.");
+            // console.log(startingPokemonPool[pokemonIndex]);
+            startingPokemonPool.splice(pokemonIndex, 1);
+            return 0;
         }
 
         // If this node is not the root note, then check the sibling node to determine cost.
@@ -66,8 +73,8 @@ class BreedingNode
         if (this.defineGender)
             cost += 5000;
 
-        let leftCost = this.left.calculateNodeCost();
-        let rightCost = this.right.calculateNodeCost();
+        let leftCost = this.left.calculateNodeCost(startingPokemonPool);
+        let rightCost = this.right.calculateNodeCost(startingPokemonPool);
 
         return cost + leftCost + rightCost;
     }

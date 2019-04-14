@@ -20,8 +20,8 @@ class BreedingTreeFinder
             return;
         }
 
-        let pokemon = this.findPokemonInStartingPool(this.desiredPokemon);
-        if(pokemon != null)
+        let pokemonIndex = this.desiredPokemon.findPokemonInStartingPool(this.startingPokemon);
+        if(pokemonIndex > -1)
         {
             alert("You already have the desired Pokemon!");
             return;
@@ -134,30 +134,26 @@ class BreedingTreeFinder
         return nodeArray;
     }
 
-    // Finds an identical pokemon from the starting pool. Returns null if none are found.
-    findPokemonInStartingPool(pokemon)
+    calculateLowestCost()
     {
-        if (this.startingPokemon)
+        let lowestCost = Infinity;
+        let lowestCostIndex = -1;
+
+        for(let i = 0; i < this.trees.length; i++)
         {
-            for (var i = 0; i < this.startingPokemon.length; i++)
+            let startingPokemon = this.startingPokemon.slice();
+            let treeCost = this.trees[i].calculateNodeCost(startingPokemon);
+
+            if (treeCost < lowestCost)
             {
-                if (this.startingPokemon[i].equals(pokemon))
-                {
-                    return this.startingPokemon[i];
-                }
+                lowestCost = treeCost;
+                lowestCostIndex = i;
             }
         }
 
-        return null;
-    }
+        console.log("Lowest cost tree index: " + lowestCostIndex);
 
-    calculateTreeCost(treeIndex)
-    {
-        let tree = this.trees[treeIndex];
-        if (tree)
-            return tree.calculateNodeCost();
-
-        return 0;
+        return lowestCost;
     }
 }
 

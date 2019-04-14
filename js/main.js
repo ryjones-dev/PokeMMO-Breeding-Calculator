@@ -55,8 +55,7 @@ function createPokemon()
 
     document.getElementById("costSubmit").onclick = () =>
     {
-        let treeID = document.getElementById("treeID").value;
-        console.log(treeFinder.calculateTreeCost(treeID));
+        console.log("Lowest Cost: " + treeFinder.calculateLowestCost());
     };
 }
 
