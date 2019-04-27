@@ -1,151 +1,130 @@
-import { Pokemon } from "./Pokemon.js";
-import { BreedingNode } from "./BreedingNode.js";
+"use strict";
 
-class BreedingTreeFinder
-{
-    desiredPokemon = null;
-    startingPokemon = [];
+import { Pokemon } from "./Pokemon";
+import { BreedingNode, Nullable } from "./BreedingNode";
 
-    trees = [];
-    bestTree = null;
+interface BestTree {
+    tree: BreedingNode;
+    cost: number;
+}
 
-    constructor(desiredPokemon, startingPokemon)
-    {
-        this.desiredPokemon = desiredPokemon;
-        this.startingPokemon = startingPokemon;
+class BreedingTreeFinder {
+    private trees: BreedingNode[] = [];
+    private bestTree: Nullable<BestTree>;
 
-        if (this.desiredPokemon.statsArray.filter(stat => stat > 0).length === 0)
-        {
-            alert("No desired perfect IVs, select at least one perfect IV.");
-            return;
-        }
+    constructor() {
+        this.bestTree = null;
+    }
 
-        let pokemonIndex = this.desiredPokemon.findPokemonInStartingPool(this.startingPokemon);
-        if(pokemonIndex > -1)
-        {
-            alert("You already have the desired Pokemon!");
-            return;
-        }
+    static copy(treeFinder: BreedingTreeFinder): BreedingTreeFinder {
+        const treeFinderCopy = new BreedingTreeFinder();
+        treeFinderCopy.trees = treeFinder.trees;
+        treeFinderCopy.bestTree = treeFinder.bestTree;
 
-        let desiredNode = new BreedingNode(this.desiredPokemon, null, null, null);
-        this.trees = this.decomposePokemon(desiredNode, true);
+        return treeFinderCopy;
     }
 
     // Breaks down a desired pokemon recursively into all possible trees.
     // Only use a copy on the root node so that the trees don't share nodes, but the nodes within the same tree are connected properly.
-    decomposePokemon(pokemonNode, useCopy)
-    {
+    decomposePokemon(pokemonNode: BreedingNode, useCopy: boolean): void {
         // Creates the array of output and sets the length to the rank of the pokemon.
-        let combinationOutput = [];
-        let combinationLength = Math.max(pokemonNode.pokemon.rank, 0);
+        const combinationOutput: number[][] = [];
+        const combinationLength = Math.max(pokemonNode.pokemon.rank, 0);
 
-        if (combinationLength == 0)
-        {
-            return [];
+        if (combinationLength == 0) {
+            return;
         }
 
         // Calculate all combinations of the calculated length of the pokemon's stats array.
-        calcCombinations(pokemonNode.pokemon.statsArray.filter(stat => stat > 0), combinationLength, 0, combinationOutput);
+        calcCombinations(pokemonNode.pokemon.stats.filter(stat => stat > 0), combinationLength, 0, combinationOutput);
 
         // Once all the combinations are calculated, find all pairwise combinations from the results.
         // This will give all possible combinations of pokemon stats that would result in this pokemon.
-        let innerCombinationOutput = [];
+        const innerCombinationOutput: any = [];
         calcCombinations(combinationOutput, 2, 0, innerCombinationOutput);
 
-        let nodeArray = [];
+        const trees: BreedingNode[] = [];
 
-        for (var i = 0; i < innerCombinationOutput.length; i++)
-        {
+        for (var i = 0; i < innerCombinationOutput.length; i++) {
             // The left and right nodes for every node can be either male/female or female/male.
             // Therefore, create two nodes, one for each case.
-            let breedingNodeMale = undefined;
-            let breedingNodeFemale = undefined;
+            let breedingNodeMale: Nullable<BreedingNode> = undefined;
+            let breedingNodeFemale: Nullable<BreedingNode> = undefined;
 
-            if (useCopy)
-            {
+            if (useCopy) {
                 breedingNodeMale = new BreedingNode(pokemonNode.pokemon, pokemonNode.parent, null, null);
 
                 // Genderless pokemon only need one breeding node.
-                if (pokemonNode.pokemon.gender != "Genderless")
-                {
+                if (pokemonNode.pokemon.gender != "Genderless") {
                     breedingNodeFemale = new BreedingNode(pokemonNode.pokemon, pokemonNode.parent, null, null);
                 }
             }
-            else
-            {
-                if (pokemonNode.pokemon.gender === "Male")
-                {
+            else {
+                if (pokemonNode.pokemon.gender === "Male") {
                     breedingNodeMale = pokemonNode;
                     breedingNodeFemale = new BreedingNode(pokemonNode.pokemon, pokemonNode.parent, null, null);
                 }
-                else if (pokemonNode.pokemon.gender === "Female")
-                {
+                else if (pokemonNode.pokemon.gender === "Female") {
                     breedingNodeMale = new BreedingNode(pokemonNode.pokemon, pokemonNode.parent, null, null);
                     breedingNodeFemale = pokemonNode;
                 }
-                else
-                {
+                else {
                     // Assume genderless pokemon, so only one breeding node needs to be created.
                     breedingNodeMale = pokemonNode;
-                }                
+                }
             }
 
             // Assigns two new pokemon from the combination output.
-            if (breedingNodeFemale)
-            {
-                let leftPokemon = new Pokemon(innerCombinationOutput[i][0], "Male", null);
-                let rightPokemon = new Pokemon(innerCombinationOutput[i][1], "Female", null);
+            if (breedingNodeFemale) {
+                let leftPokemon = new Pokemon(innerCombinationOutput[i][0], "Male");
+                let rightPokemon = new Pokemon(innerCombinationOutput[i][1], "Female");
 
                 breedingNodeMale.left = new BreedingNode(leftPokemon, breedingNodeMale, null, null);
                 breedingNodeMale.right = new BreedingNode(rightPokemon, breedingNodeMale, null, null);
 
-                nodeArray.push(breedingNodeMale);
+                trees.push(breedingNodeMale);
 
                 // Recursively decompose the left and right breeding nodes.
                 this.decomposePokemon(breedingNodeMale.left, false);
                 this.decomposePokemon(breedingNodeMale.right, false);
 
-                leftPokemon = new Pokemon(innerCombinationOutput[i][0], "Female", null);
-                rightPokemon = new Pokemon(innerCombinationOutput[i][1], "Male", null);
+                leftPokemon = new Pokemon(innerCombinationOutput[i][0], "Female");
+                rightPokemon = new Pokemon(innerCombinationOutput[i][1], "Male");
 
                 breedingNodeFemale.left = new BreedingNode(leftPokemon, breedingNodeFemale, null, null);
                 breedingNodeFemale.right = new BreedingNode(rightPokemon, breedingNodeFemale, null, null);
 
-                nodeArray.push(breedingNodeFemale);
+                trees.push(breedingNodeFemale);
 
                 this.decomposePokemon(breedingNodeFemale.left, false);
                 this.decomposePokemon(breedingNodeFemale.right, false);
             }
-            else
-            {
-                let leftPokemon = new Pokemon(innerCombinationOutput[i][0], "Genderless", null);
-                let rightPokemon = new Pokemon(innerCombinationOutput[i][1], "Genderless", null);
+            else {
+                let leftPokemon = new Pokemon(innerCombinationOutput[i][0], "Genderless");
+                let rightPokemon = new Pokemon(innerCombinationOutput[i][1], "Genderless");
 
                 breedingNodeMale.left = new BreedingNode(leftPokemon, breedingNodeMale, null, null);
                 breedingNodeMale.right = new BreedingNode(rightPokemon, breedingNodeMale, null, null);
 
-                nodeArray.push(breedingNodeMale);
+                trees.push(breedingNodeMale);
 
                 this.decomposePokemon(breedingNodeMale.left, false);
                 this.decomposePokemon(breedingNodeMale.right, false);
             }
         }
 
-        return nodeArray;
+        this.trees = trees;
     }
 
-    calculateLowestCost()
-    {
-        let lowestCost = Infinity;
-        let lowestCostIndex = -1;
+    calculateBestTree(startingPokemonPool: Pokemon[]): BestTree {
+        let lowestCost: number = Infinity;
+        let lowestCostIndex: number = -1;
 
-        for(let i = 0; i < this.trees.length; i++)
-        {
-            let startingPokemon = this.startingPokemon.slice();
-            let treeCost = this.trees[i].calculateNodeCost(startingPokemon);
+        for (let i = 0; i < this.trees.length; i++) {
+            const startingPokemonPoolCopy = startingPokemonPool.slice();
+            let treeCost = this.trees[i].calculateNodeCost(startingPokemonPoolCopy);
 
-            if (treeCost < lowestCost)
-            {
+            if (treeCost < lowestCost) {
                 lowestCost = treeCost;
                 lowestCostIndex = i;
             }
@@ -153,31 +132,38 @@ class BreedingTreeFinder
 
         console.log("Lowest cost tree index: " + lowestCostIndex);
 
-        return lowestCost;
+        this.bestTree = {
+            "tree": this.trees[lowestCostIndex],
+            "cost": lowestCost
+        }
+
+        return this.bestTree;
+    }
+
+    getTree(index: number): BreedingNode {
+        return this.trees[index];
     }
 }
 
 // Returns all combinations of a given length from a supplied set of data.
-function calcCombinations(input, len, start, output, startLen, result)
-{
-    if (startLen === undefined) startLen = len;
-    if (result === undefined)
-    {
+function calcCombinations(input: any, len: number, start: number, output: any, startLen?: number, result?: number[]): void {
+    if (startLen === undefined)
+        startLen = len;
+
+    if (result === undefined) {
         result = [];
         result.length = startLen;
     }
 
-    if (len === 0)
-    {
+    if (len === 0) {
         output.push(result.slice());
         return;
     }
 
-    for (var i = start; i <= input.length - len; i++)
-    {
+    for (let i = start; i <= input.length - len; i++) {
         result[result.length - len] = input[i];
         calcCombinations(input, len - 1, i + 1, output, startLen, result);
     }
 }
 
-export { BreedingTreeFinder };
+export { BreedingTreeFinder, BestTree };

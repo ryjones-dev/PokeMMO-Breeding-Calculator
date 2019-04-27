@@ -1,0 +1,28 @@
+{
+  "name": "pokemmo-breeding-calculator",
+  "version": "1.0.0",
+  "description": "A visual breeding tool to help calculate the cost and steps towards breeding a perfect competitive Pokemon for PokeMMO.",
+  "private": true,
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack",
+    "watch": "webpack --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rpj5582/PokeMMO-Breeding-Calculator.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/rpj5582/PokeMMO-Breeding-Calculator/issues"
+  },
+  "homepage": "https://github.com/rpj5582/PokeMMO-Breeding-Calculator#readme",
+  "devDependencies": {
+    "ts-loader": "^5.4.4",
+    "typescript": "^3.4.5",
+    "webpack": "^4.30.0",
+    "webpack-cli": "^3.3.1",
+    "worker-loader": "^2.0.0"
+  }
+}
